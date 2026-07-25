@@ -123,15 +123,97 @@ body {
 .empty-state .icon { font-size:48px; margin-bottom:12px; }
 .empty-state .text { font-size:14px; }
 
-.fab {
+.fab-row {
   position:fixed; bottom:calc(24px + var(--safe-bottom)); right:20px;
+  display:flex; flex-direction:column; gap:12px; z-index:90;
+}
+.fab {
   width:52px; height:52px; border-radius:50%; border:none;
   background:linear-gradient(135deg,var(--blue),var(--blue-light));
   color:#fff; font-size:26px; box-shadow:0 4px 20px rgba(0,82,217,.4);
-  cursor:pointer; z-index:90; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
   transition:transform .2s; -webkit-tap-highlight-color:transparent;
 }
 .fab:active { transform:scale(.92); }
+.fab-mic {
+  background:linear-gradient(135deg,#1A1A2E,#E34D59); font-size:22px;
+  box-shadow:0 4px 20px rgba(227,77,89,.3);
+}
+.fab-mic.listening {
+  background:linear-gradient(135deg,#E34D59,#FF4444);
+  animation: micPulse 1.2s infinite;
+}
+@keyframes micPulse {
+  0%,100% { box-shadow:0 4px 20px rgba(227,77,89,.3); }
+  50% { box-shadow:0 4px 28px rgba(227,77,89,.6),0 0 0 8px rgba(227,77,89,.1); }
+}
+
+.voice-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:250;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .25s;
+}
+.voice-overlay.open { opacity:1; pointer-events:auto; }
+
+.voice-ring {
+  position:relative; width:100px; height:100px; margin-bottom:24px;
+}
+.voice-ring .core {
+  position:absolute; inset:20px; border-radius:50%;
+  background:linear-gradient(135deg,#E34D59,#FF6B6B);
+  display:flex; align-items:center; justify-content:center; font-size:32px;
+}
+.voice-ring .r1,.voice-ring .r2,.voice-ring .r3 {
+  position:absolute; inset:0; border-radius:50%;
+  border:3px solid rgba(227,77,89,.4); animation:ringOut 1.5s infinite;
+}
+.voice-ring .r2 { animation-delay:.3s; }
+.voice-ring .r3 { animation-delay:.6s; }
+@keyframes ringOut {
+  0% { transform:scale(.6); opacity:1; }
+  100% { transform:scale(1.4); opacity:0; }
+}
+.voice-hint { color:#fff; font-size:15px; font-weight:600; text-align:center; }
+.voice-text { color:rgba(255,255,255,.7); font-size:18px; margin-top:12px; min-height:24px; text-align:center; max-width:80vw; }
+.voice-stop-btn {
+  margin-top:24px; padding:12px 32px; border-radius:24px; border:none;
+  background:rgba(255,255,255,.15); color:#fff; font-size:15px;
+  font-weight:600; cursor:pointer; backdrop-filter:blur(4px);
+}
+
+.voice-result-card {
+  position:fixed; bottom:calc(100px + var(--safe-bottom)); left:12px; right:12px;
+  background:#fff; border-radius:16px; padding:16px; z-index:260;
+  box-shadow:0 8px 40px rgba(0,0,0,.15);
+  opacity:0; transform:translateY(20px); pointer-events:none;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+.voice-result-card.open { opacity:1; transform:translateY(0); pointer-events:auto; }
+.voice-result-card .vr-head {
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;
+}
+.voice-result-card .vr-head span { font-size:13px; font-weight:700; color:var(--text2); }
+.voice-result-card .vr-head small { font-size:11px; color:var(--green); }
+.voice-result-card .vr-body { margin-bottom:12px; }
+.voice-result-card .vr-item {
+  display:flex; align-items:center; gap:6px; font-size:14px; padding:4px 0;
+}
+.voice-result-card .vr-item .vri { font-size:14px; }
+.voice-result-card .vr-btns { display:flex; gap:8px; }
+.voice-result-card .vr-btns button {
+  flex:1; padding:10px; border-radius:10px; font-size:14px;
+  font-weight:600; border:none; cursor:pointer;
+}
+.vr-confirm { background:var(--blue); color:#fff; }
+.vr-edit { background:var(--blue-bg); color:var(--blue); }
+.vr-cancel { background:#f5f5f5; color:var(--text2); }
+.voice-inline-btn {
+  position:absolute; right:45px; top:50%; transform:translateY(-50%);
+  width:38px; height:38px; border-radius:50%; border:none;
+  background:rgba(255,255,255,.15); color:#fff; font-size:16px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  z-index:5;
+}
 
 .modal-overlay {
   position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200;
@@ -186,6 +268,7 @@ body {
 
 <div class="header">
   <h1>📅 日程管理</h1>
+  <button class="voice-inline-btn" onclick="startVoice()" title="语音输入">🎤</button>
   <div class="sync-status">💾 本地存储</div>
 </div>
 
@@ -204,7 +287,10 @@ body {
 
 <div class="main" id="mc"><div class="empty-state"><div class="icon">📭</div><div class="text">暂无日程，点击右下角 + 添加</div></div></div>
 
-<button class="fab" onclick="M.open()">+</button>
+<div class="fab-row">
+  <button class="fab fab-mic" id="micBtn" onclick="startVoice()" title="语音输入">🎤</button>
+  <button class="fab" onclick="M.open()">+</button>
+</div>
 
 <div class="modal-overlay" id="mo">
   <div class="modal">
@@ -238,6 +324,30 @@ body {
 </div>
 
 <div class="toast" id="tst"></div>
+
+<!-- 语音输入浮层 -->
+<div class="voice-overlay" id="vo" onclick="if(event.target===this)stopVoice()">
+  <div class="voice-ring">
+    <div class="core">🎤</div>
+    <div class="r1"></div>
+    <div class="r2"></div>
+    <div class="r3"></div>
+  </div>
+  <div class="voice-hint" id="vh">正在聆听...</div>
+  <div class="voice-text" id="vt"></div>
+  <button class="voice-stop-btn" onclick="stopVoice()">✋ 点击结束</button>
+</div>
+
+<!-- 语音解析结果 -->
+<div class="voice-result-card" id="vrc">
+  <div class="vr-head"><span>📋 语音识别结果</span><small id="vrs">确认中...</small></div>
+  <div class="vr-body" id="vrb"></div>
+  <div class="vr-btns">
+    <button class="vr-cancel" onclick="dismissVoice()">放弃</button>
+    <button class="vr-edit" onclick="editVoice()">修改</button>
+    <button class="vr-confirm" onclick="confirmVoice()">✓ 保存</button>
+  </div>
+</div>
 
 <script>
 // ========================
@@ -453,6 +563,294 @@ document.getElementById('vs').addEventListener('click',e=>{
 document.getElementById('mo').addEventListener('click',e=>{
   if(e.target===e.currentTarget) M.close();
 });
+
+// ========================
+// 中文日程 NLP 解析器
+// ========================
+const weekNames = {日:0,一:1,二:2,三:3,四:4,五:5,六:6};
+const numMap = {'零':0,'一':1,'二':2,'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'十一':11,'十二':12,
+  '0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'11':11,'12':12,
+  '十三':13,'十四':14,'十五':15,'十六':16,'十七':17,'十八':18,'十九':19,'二十':20,
+  '二十一':21,'二十二':22,'二十三':23,'二十四':24,'二十五':25,'二十六':26,'二十七':27,'二十八':28,'二十九':29,'三十':30,'三十一':31};
+const allDayWords = /(全天|一整天|整天)/;
+
+function parseNaturalLanguage(text) {
+  let remaining = text.replace(/[，。！？、；：""'']/g,' ').replace(/\s+/g,' ').trim();
+  const result = {date:'',time:'',endTime:'',title:'',category:'work',priority:'medium',note:''};
+
+  // --- 检测全天 ---
+  if(allDayWords.test(remaining)) {
+    result.time = ''; result.endTime = '';
+    remaining = remaining.replace(allDayWords,'').trim();
+  }
+
+  // --- 解析结束时间 ---
+  const endMatch = remaining.match(/(到|至|～|~)\s*((?:上午|下午|晚上|中午|早上|凌晨)?\s*(?:[0-9]+|[一二两三四五六七八九十]+)\s*(?:点|时|：|:)\s*(?:[0-9]+|[一二三四五]十?[一二三四五六七八九]?)?\s*(?:分|半|刻)?)/);
+  let endTimeStr = '';
+  if (endMatch) {
+    endTimeStr = endMatch[2];
+    remaining = remaining.slice(0,endMatch.index) + ' ' + remaining.slice(endMatch.index + endMatch[0].length);
+    result.endTime = parseTime(endTimeStr);
+  }
+
+  // --- 解析日期 ---
+  const dateInfo = parseDate(remaining);
+  if (dateInfo) {
+    result.date = dateInfo.date;
+    remaining = dateInfo.rest;
+  } else {
+    result.date = today();
+  }
+
+  // --- 解析开始时间 ---
+  if (!allDayWords.test(text)) {
+    const timeInfo = parseTimeFromText(remaining);
+    if (timeInfo) {
+      result.time = timeInfo.time;
+      remaining = timeInfo.rest;
+      // 如果有开始时间但没有结束时间，自动 +1h
+      if (result.time && !result.endTime) {
+        const [h,m] = result.time.split(':').map(Number);
+        result.endTime = `${String(h+1).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      }
+    }
+  }
+
+  // --- 剩余的作为标题 ---
+  result.title = remaining.replace(/[，。！？、；：\s]+/g,' ').trim();
+
+  // --- 推断分类 ---
+  if (/会|讨论|汇报|评审|周会|日会|月会|站会/.test(result.title)) result.category='meeting';
+  else if (/运动|跑步|健身|游泳|瑜伽|锻炼|体检/.test(result.title)) result.category='health';
+  else if (/学|课|书|阅读|考试|培训/.test(result.title)) result.category='study';
+  else if (/吃|饭|聚餐|约|逛街|看|电影|旅行|旅游/.test(result.title)) result.category='personal';
+
+  // --- 推断优先级 ---
+  if (/重要|紧急|必须|关键|截止|deadline/i.test(result.title)) result.priority='high';
+  else if (/有空|顺便|不急|随便/.test(result.title)) result.priority='low';
+
+  return result;
+}
+
+function parseDate(text) {
+  const t = text.trim();
+  const now = new Date();
+  // 今天/明天/后天/大后天
+  if (/^今天/.test(t)) return {date:dk(now), rest:t.slice(2).trim()};
+  if (/^明天/.test(t)) { const d=new Date(now); d.setDate(d.getDate()+1); return {date:dk(d), rest:t.slice(2).trim()}; }
+  if (/^后天/.test(t)) { const d=new Date(now); d.setDate(d.getDate()+2); return {date:dk(d), rest:t.slice(2).trim()}; }
+  if (/^大后天/.test(t)) { const d=new Date(now); d.setDate(d.getDate()+3); return {date:dk(d), rest:t.slice(3).trim()}; }
+
+  // 下/这 + 周X
+  const nextWeek = t.match(/^(下|下个?\s*)周\s*([一二三四五六日天])/);
+  if (nextWeek) {
+    const offset = nextWeek[1].includes('下') ? 7 : 0;
+    const wd = weekNames[nextWeek[2]==='天'?'日':nextWeek[2]];
+    const d = nextWeekday(now, wd, offset);
+    return {date:dk(d), rest:t.slice(nextWeek[0].length).trim()};
+  }
+  // 这周X / 周X
+  const thisWeek = t.match(/^(这|这个?\s*)?周\s*([一二三四五六日天])/);
+  if (thisWeek) {
+    const wd = weekNames[thisWeek[2]==='天'?'日':thisWeek[2]];
+    const d = nextWeekday(now, wd, 0);
+    return {date:dk(d), rest:t.slice(thisWeek[0].length).trim()};
+  }
+
+  // X月X日 / X月X号
+  const absDate = t.match(/^([0-9]+|[一二三四五六七八九十]+)月\s*([0-9]+|[一二三四五六七八九]+[一二]?)\s*[日号]/);
+  if (absDate) {
+    const m = toNum(absDate[1]); const dd = toNum(absDate[2]);
+    const y = now.getFullYear();
+    return {date:`${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`, rest:t.slice(absDate[0].length).trim()};
+  }
+
+  // X号 / X日
+  const dayOnly = t.match(/^([0-9]+|[一二三四五六七八九]+[一二]?)\s*[日号]/);
+  if (dayOnly) {
+    const dd = toNum(dayOnly[1]); const m = now.getMonth()+1; const y = now.getFullYear();
+    return {date:`${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`, rest:t.slice(dayOnly[0].length).trim()};
+  }
+
+  return null;
+}
+
+function parseTimeFromText(text) {
+  const t = text.trim();
+  const m = t.match(/^((?:上午|下午|晚上|中午|早上|凌晨)?\s*(?:[0-9]+|[一二两三四五六七八九十]+)\s*(?:点|时|：|:)\s*(?:[0-9]+|[一二三四五]十?[一二三四五六七八九]?)?\s*(?:分|半|刻)?)/);
+  if (!m) return null;
+  const time = parseTime(m[1]);
+  return time ? {time, rest:t.slice(m[0].length).trim()} : null;
+}
+
+function parseTime(ts) {
+  if (!ts||!ts.trim()) return '';
+  let s = ts.trim();
+  let ampm = null;
+  if (/上午|早上/.test(s)) ampm = 'am';
+  if (/下午|晚上|中午/.test(s)) ampm = 'pm';
+  s = s.replace(/上午|下午|晚上|中午|早上|凌晨/g,'').trim();
+
+  // 处理 "半" "刻"
+  let min = 0;
+  if (s.includes('半')) { min = 30; s = s.replace('半',''); }
+  if (/一刻/.test(s)) { min = 15; s = s.replace(/一?刻/,''); }
+  if (/三刻/.test(s)) { min = 45; s = s.replace('三刻/',''); }
+
+  // 提取数字
+  const parts = s.split(/[点时分：:]/);
+  let h = toNum(parts[0]||'0');
+  if (!min && parts[1]) min = toNum(parts[1]);
+
+  // AM/PM 转换
+  if (ampm==='pm' && h<12) h += 12;
+  if (ampm==='am' && h===12) h = 0;
+  // 无 am/pm，默认可根据语境推断：8-12 点可能是上午，其他看情况
+  if (!ampm && h>=8 && h<=12) {/* keep */}
+
+  return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+}
+
+function toNum(s) {
+  s = (s||'').trim();
+  if (/^\d+$/.test(s)) return parseInt(s,10);
+  return numMap[s] !== undefined ? numMap[s] : parseInt(s,10)||0;
+}
+
+function nextWeekday(from, targetDow, addWeeks) {
+  const d = new Date(from); d.setHours(0,0,0,0);
+  const diff = targetDow - d.getDay();
+  d.setDate(d.getDate() + diff + (addWeeks||0)*7);
+  if (d <= new Date(from.getFullYear(),from.getMonth(),from.getDate())) d.setDate(d.getDate()+7);
+  return d;
+}
+
+// ========================
+// 语音识别
+// ========================
+let recognition = null;
+let voiceParsed = null;
+let isListening = false;
+
+function initSpeech() {
+  if (recognition) return true;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return false;
+  recognition = new SR();
+  recognition.lang = 'zh-CN';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  let finalText = '';
+  recognition.onresult = (e) => {
+    let transcript = '';
+    for (let i=e.resultIndex; i<e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        finalText += e.results[i][0].transcript;
+      } else {
+        transcript += e.results[i][0].transcript;
+      }
+    }
+    document.getElementById('vt').textContent = finalText + transcript;
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    document.getElementById('micBtn').classList.remove('listening');
+    document.getElementById('vo').classList.remove('open');
+    const finalText = document.getElementById('vt').textContent.trim();
+    if (finalText) {
+      processVoice(finalText);
+    } else {
+      document.getElementById('vt').textContent = '';
+    }
+  };
+
+  recognition.onerror = (e) => {
+    isListening = false;
+    document.getElementById('micBtn').classList.remove('listening');
+    document.getElementById('vo').classList.remove('open');
+    document.getElementById('vt').textContent = '';
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      toast('🎤 识别失败：' + (e.error==='not-allowed'?'请允许麦克风权限':e.error), 'err');
+    }
+  };
+  return true;
+}
+
+function startVoice() {
+  if (isListening) return;
+  if (!initSpeech()) {
+    toast('⚠️ 您的浏览器不支持语音识别，请使用 Chrome 或 Safari', 'err');
+    return;
+  }
+  isListening = true;
+  document.getElementById('vt').textContent = '';
+  document.getElementById('vh').textContent = '正在聆听...';
+  document.getElementById('micBtn').classList.add('listening');
+  document.getElementById('vo').classList.add('open');
+  try { recognition.start(); } catch(e) {}
+}
+
+function stopVoice() {
+  if (!isListening||!recognition) return;
+  try { recognition.stop(); } catch(e) {}
+}
+
+function processVoice(rawText) {
+  voiceParsed = parseNaturalLanguage(rawText);
+  showVoiceResult(rawText, voiceParsed);
+}
+
+function showVoiceResult(raw, parsed) {
+  const vrc = document.getElementById('vrc');
+  const vrb = document.getElementById('vrb');
+  const vrs = document.getElementById('vrs');
+  const ts = parsed.time ? (parsed.time + (parsed.endTime?' - '+parsed.endTime:'')) : '全天';
+  const dl = parsed.date ? new Date(parsed.date+'T00:00:00') : null;
+  const ds = dl ? `${dl.getMonth()+1}月${dl.getDate()}日 周${DOWS[dl.getDay()]}` : '今天';
+
+  vrb.innerHTML = `
+    <div class="vr-item"><span class="vri">📝</span><strong>${esc(parsed.title||'(未识别)')}</strong></div>
+    <div class="vr-item"><span class="vri">📅</span>${ds}</div>
+    <div class="vr-item"><span class="vri">🕐</span>${ts}</div>
+    <div class="vr-item"><span class="vri">📂</span>${CATS[parsed.category]} · ${parsed.priority==='high'?'🔴 高':parsed.priority==='low'?'🟢 低':'🟡 中'}</div>
+  `;
+  vrs.textContent = '请确认';
+  vrc.classList.add('open');
+}
+
+function dismissVoice() {
+  document.getElementById('vrc').classList.remove('open');
+  voiceParsed = null;
+}
+
+function confirmVoice() {
+  if (!voiceParsed) return;
+  const p = voiceParsed;
+  S.push({id:gid(), title:p.title||'语音日程', date:p.date||today(), time:p.time||'', endTime:p.endTime||'', category:p.category, priority:p.priority, note:p.note||'', done:false});
+  save(S); render();
+  document.getElementById('vrc').classList.remove('open');
+  voiceParsed = null;
+  toast('🎤 语音日程已保存 ✓','ok');
+}
+
+function editVoice() {
+  if (!voiceParsed) return;
+  const p = voiceParsed;
+  document.getElementById('vrc').classList.remove('open');
+  M.open();
+  document.getElementById('ft').value = p.title||'';
+  document.getElementById('fd').value = p.date||today();
+  document.getElementById('ftm').value = p.time||'';
+  document.getElementById('fet').value = p.endTime||'';
+  document.getElementById('fc').value = p.category;
+  document.getElementById('fp').value = p.priority;
+  document.getElementById('fn').value = p.note||'';
+  voiceParsed = null;
+  document.getElementById('mt').textContent = '编辑日程（语音）';
+}
 
 // ========================
 // 初始化
