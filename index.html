@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="日程">
+<meta name="theme-color" content="#003B9C">
+<title>日程管理</title>
+<style>
+:root {
+  --blue: #0052D9; --blue-dark: #003B9C; --blue-light: #1E6FFF; --blue-bg: #F0F5FF;
+  --green: #06D6A0; --yellow: #FFAA01; --red: #E34D59;
+  --card: #fff; --text: #1A1A2E; --text2: #8899AA; --border: #E4EAF2;
+  --safe-bottom: env(safe-area-inset-bottom, 20px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--blue-bg); color:var(--text); min-height:100vh;
+  padding-top:calc(44px + var(--safe-top)); padding-bottom:calc(80px + var(--safe-bottom));
+  -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
+}
+
+.header {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  background:linear-gradient(135deg,var(--blue-dark),var(--blue-light));
+  color:#fff; padding:calc(12px + var(--safe-top)) 20px 14px;
+  display:flex; align-items:center; justify-content:space-between;
+  box-shadow:0 2px 20px rgba(0,59,156,.2);
+}
+.header h1 { font-size:18px; font-weight:700; letter-spacing:.5px; }
+.header .sync-status {
+  font-size:11px; padding:4px 10px; background:rgba(255,255,255,.15); border-radius:10px;
+}
+
+.view-switch {
+  display:flex; margin:10px 12px 0; background:#fff; border-radius:10px;
+  padding:3px; box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.view-btn {
+  flex:1; text-align:center; padding:8px; border-radius:8px; font-size:13px;
+  font-weight:600; cursor:pointer; border:none; background:none; color:var(--text2); transition:.2s;
+}
+.view-btn.active { background:var(--blue); color:#fff; }
+
+.week-strip {
+  display:flex; gap:0; padding:6px 6px 2px;
+  background:#fff; margin:8px 12px 0; border-radius:14px;
+  overflow-x:auto; box-shadow:0 1px 3px rgba(0,0,0,.03);
+  -webkit-overflow-scrolling:touch; scrollbar-width:none;
+}
+.week-strip::-webkit-scrollbar { display:none; }
+.day-tab {
+  flex:0 0 auto; min-width:41px; text-align:center; padding:6px 7px;
+  border-radius:10px; cursor:pointer; font-size:12px; color:var(--text2);
+  user-select:none; transition:all .15s;
+}
+.day-tab .dow { font-size:10px; margin-bottom:1px; }
+.day-tab .date { font-size:16px; font-weight:700; }
+.day-tab.active { background:var(--blue); color:#fff; }
+.day-tab .dot { width:4px; height:4px; border-radius:50%; background:var(--blue); margin:2px auto 0; display:none; }
+.day-tab.has-events .dot { display:block; }
+.day-tab.active .dot { background:#fff; }
+
+.stats-bar {
+  display:flex; margin:8px 12px; background:#fff; border-radius:12px;
+  overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.03);
+}
+.stat-item {
+  flex:1; text-align:center; padding:12px 6px; border-right:1px solid var(--border);
+}
+.stat-item:last-child { border-right:none; }
+.stat-item .num { font-size:22px; font-weight:800; }
+.stat-item .num.c1 { color:var(--blue); }
+.stat-item .num.c2 { color:var(--green); }
+.stat-item .num.c3 { color:var(--red); }
+.stat-item .label { font-size:10px; color:var(--text2); margin-top:2px; }
+
+.main { padding:4px 12px; }
+.day-section { margin-bottom:10px; }
+.day-label {
+  font-size:12px; font-weight:700; color:var(--text2);
+  padding:6px 4px 6px; display:flex; align-items:center; gap:6px;
+}
+.day-label .count { font-size:10px; background:var(--border); padding:2px 8px; border-radius:8px; }
+
+.event-card {
+  background:var(--card); border-radius:12px; padding:12px 14px;
+  margin-bottom:8px; border-left:4px solid var(--blue);
+  box-shadow:0 1px 4px rgba(0,0,0,.03); cursor:pointer;
+  transition:transform .12s; display:flex; gap:10px; align-items:flex-start;
+}
+.event-card:active { transform:scale(.985); }
+.event-card.done { opacity:.45; }
+.event-card.done .tt { text-decoration:line-through; }
+.event-card .check {
+  width:22px; height:22px; border-radius:50%; border:2px solid var(--border);
+  flex-shrink:0; margin-top:2px; display:flex; align-items:center; justify-content:center;
+  font-size:12px; transition:.2s;
+}
+.event-card.done .check { background:var(--green); border-color:var(--green); color:#fff; }
+.event-card .body { flex:1; min-width:0; }
+.event-card .tt { font-size:15px; font-weight:600; line-height:1.4; }
+.event-card .meta { display:flex; gap:6px; align-items:center; margin-top:5px; font-size:11px; color:var(--text2); flex-wrap:wrap; }
+.event-card .tbadge {
+  font-size:11px; font-weight:600; color:var(--blue);
+  background:var(--blue-bg); padding:3px 8px; border-radius:5px;
+}
+.tag { padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; }
+.tag.high { background:#FFEBEE; color:#C62828; }
+.tag.medium { background:#FFF3E0; color:#E65100; }
+.tag.low { background:#E8F5E9; color:#2E7D32; }
+.cat-work { color:#1BADF8; }
+.cat-meeting { color:#FFAA01; }
+.cat-personal { color:#06D6A0; }
+.cat-health { color:#E34D59; }
+.cat-study { color:#7B1FA2; }
+
+.empty-state { text-align:center; padding:40px 20px; color:#C0C8D4; }
+.empty-state .icon { font-size:48px; margin-bottom:12px; }
+.empty-state .text { font-size:14px; }
+
+.fab {
+  position:fixed; bottom:calc(24px + var(--safe-bottom)); right:20px;
+  width:52px; height:52px; border-radius:50%; border:none;
+  background:linear-gradient(135deg,var(--blue),var(--blue-light));
+  color:#fff; font-size:26px; box-shadow:0 4px 20px rgba(0,82,217,.4);
+  cursor:pointer; z-index:90; display:flex; align-items:center; justify-content:center;
+  transition:transform .2s; -webkit-tap-highlight-color:transparent;
+}
+.fab:active { transform:scale(.92); }
+
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200;
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .25s;
+}
+.modal-overlay.open { opacity:1; pointer-events:auto; }
+.modal {
+  background:#fff; width:100%; max-width:500px; max-height:90vh;
+  border-radius:20px 20px 0 0; padding:24px 20px calc(24px + var(--safe-bottom));
+  transform:translateY(100%); transition:transform .3s cubic-bezier(.4,0,.2,1); overflow-y:auto;
+}
+.modal-overlay.open .modal { transform:translateY(0); }
+
+.modal h2 { font-size:18px; font-weight:700; margin-bottom:20px; }
+.fg { margin-bottom:14px; }
+.fg label { display:block; font-size:11px; font-weight:700; color:var(--text2); margin-bottom:5px; text-transform:uppercase; letter-spacing:.5px; }
+.fg input,.fg select,.fg textarea {
+  width:100%; padding:11px 14px; border:2px solid var(--border); border-radius:10px;
+  font-size:15px; font-family:inherit; color:var(--text); background:#FAFBFD;
+  transition:border-color .2s; -webkit-appearance:none;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus { outline:none; border-color:var(--blue); background:#fff; }
+.fr { display:flex; gap:10px; }
+.fr .fg { flex:1; }
+.br { display:flex; gap:10px; margin-top:22px; }
+.btn {
+  flex:1; padding:14px; border-radius:12px; font-size:15px;
+  font-weight:700; border:none; cursor:pointer; transition:.15s;
+}
+.btn:active { transform:scale(.97); }
+.btn-p { background:var(--blue); color:#fff; }
+.btn-d { background:#fff; color:var(--red); border:2px solid #FFCDD2; }
+.btn-g { background:#f5f5f5; color:var(--text2); }
+
+.toast {
+  position:fixed; top:calc(60px + var(--safe-top)); left:50%; transform:translateX(-50%) translateY(-20px);
+  background:#1A1A2E; color:#fff; padding:10px 20px; border-radius:10px;
+  font-size:14px; font-weight:600; z-index:300; opacity:0; transition:all .3s;
+  pointer-events:none; white-space:nowrap;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.ok { background:var(--green); color:#000; }
+.toast.err { background:var(--red); }
+
+@media (min-width:600px) {
+  .main,.stats-bar,.view-switch { max-width:600px; margin-left:auto; margin-right:auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📅 日程管理</h1>
+  <div class="sync-status">💾 本地存储</div>
+</div>
+
+<div class="view-switch" id="vs">
+  <button class="view-btn active" data-view="week">📆 周视图</button>
+  <button class="view-btn" data-view="list">📋 全部</button>
+</div>
+
+<div class="week-strip" id="ws"></div>
+
+<div class="stats-bar">
+  <div class="stat-item"><div class="num c1" id="tc">0</div><div class="label">总日程</div></div>
+  <div class="stat-item"><div class="num c2" id="dc">0</div><div class="label">已完成</div></div>
+  <div class="stat-item"><div class="num c3" id="pc">0</div><div class="label">待完成</div></div>
+</div>
+
+<div class="main" id="mc"><div class="empty-state"><div class="icon">📭</div><div class="text">暂无日程，点击右下角 + 添加</div></div></div>
+
+<button class="fab" onclick="M.open()">+</button>
+
+<div class="modal-overlay" id="mo">
+  <div class="modal">
+    <h2 id="mt">新建日程</h2>
+    <form onsubmit="M.save(event)">
+      <input type="hidden" id="eid">
+      <div class="fg"><label>标题 *</label><input type="text" id="ft" placeholder="日程标题" required autocomplete="off"></div>
+      <div class="fg"><label>日期 *</label><input type="date" id="fd" required></div>
+      <div class="fr">
+        <div class="fg"><label>开始时间</label><input type="time" id="ftm"></div>
+        <div class="fg"><label>结束时间</label><input type="time" id="fet"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>分类</label>
+          <select id="fc"><option value="work">💼 工作</option><option value="meeting">🤝 会议</option><option value="personal">👤 个人</option><option value="health">💪 健康</option><option value="study">📚 学习</option></select>
+        </div>
+        <div class="fg"><label>优先级</label>
+          <select id="fp"><option value="medium">🟡 中</option><option value="high">🔴 高</option><option value="low">🟢 低</option></select>
+        </div>
+      </div>
+      <div class="fg"><label>备注</label><textarea id="fn" rows="2" placeholder="可选备注..."></textarea></div>
+      <div class="br">
+        <button type="button" class="btn btn-g" onclick="M.close()">取消</button>
+        <button type="submit" class="btn btn-p" id="bs">保存</button>
+      </div>
+      <div class="br" id="dr" style="display:none">
+        <button type="button" class="btn btn-d" onclick="M.del()">🗑 删除此日程</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="tst"></div>
+
+<script>
+// ========================
+// 数据引擎 —— localStorage 持久化，完全不依赖后端
+// ========================
+const LS_KEY = 'schedule_data_v2';
+const DOWS = ['日','一','二','三','四','五','六'];
+const CATS = {work:'工作',meeting:'会议',personal:'个人',health:'健康',study:'学习'};
+
+// 内置初始数据（从 macOS 系统日历快照）
+const SEED = [
+  {id:'mrzr1qzl7m0q',title:'WorkBuddy 项目合作讨论',date:'2026-07-27',time:'15:00',endTime:'16:00',category:'meeting',priority:'high',note:'讨论 WorkBuddy 项目合作事宜',done:false},
+  {id:'seed_icloud_1',title:'省政数wb',date:'2026-07-27',time:'21:30',endTime:'22:15',category:'work',priority:'medium',note:'',done:false},
+  {id:'seed_icloud_2',title:'广东公有云日会',date:'2026-07-28',time:'08:30',endTime:'09:30',category:'meeting',priority:'high',note:'',done:false},
+  {id:'seed_icloud_3',title:'省政数wb',date:'2026-07-28',time:'21:30',endTime:'22:15',category:'work',priority:'medium',note:'',done:false},
+  {id:'seed_icloud_4',title:'省政数wb',date:'2026-07-29',time:'21:30',endTime:'22:15',category:'work',priority:'medium',note:'',done:false},
+  {id:'seed_icloud_5',title:'省政数wb',date:'2026-07-30',time:'21:30',endTime:'22:15',category:'work',priority:'medium',note:'',done:false},
+  {id:'seed_icloud_6',title:'广东公有云日会',date:'2026-07-31',time:'08:30',endTime:'09:30',category:'meeting',priority:'high',note:'',done:false},
+  {id:'seed_icloud_7',title:'省政数wb',date:'2026-07-31',time:'21:30',endTime:'22:15',category:'work',priority:'medium',note:'',done:false},
+];
+
+function load() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  // 首次使用：导入种子数据
+  localStorage.setItem(LS_KEY, JSON.stringify(SEED));
+  return SEED;
+}
+
+function save(data) {
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+}
+
+let S = load();
+let view = 'week';
+let editId = null;
+
+// ========================
+// 工具
+// ========================
+function today() { return new Date().toISOString().slice(0,10); }
+function dk(d) { const y=d.getFullYear(); return `${y}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function fmtd(d) { return `${d.getMonth()+1}/${d.getDate()}`; }
+function gid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function wk() {
+  const n = new Date(), day = n.getDay();
+  const m = new Date(n); m.setDate(n.getDate()+(day===0?-6:1-day)); m.setHours(0,0,0,0);
+  return Array.from({length:7},(_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d;});
+}
+
+function toast(msg,t) {
+  const el = document.getElementById('tst');
+  el.textContent = msg; el.className = `toast ${t||''} show`;
+  clearTimeout(el._t); el._t = setTimeout(()=>el.className='toast',2000);
+}
+
+// ========================
+// 渲染
+// ========================
+function filtered() {
+  if (view==='list') return [...S];
+  const keys = new Set(wk().map(dk));
+  return S.filter(s=>keys.has(s.date));
+}
+
+function render() {
+  const f = filtered();
+  // Stats
+  document.getElementById('tc').textContent = S.length;
+  document.getElementById('dc').textContent = S.filter(s=>s.done).length;
+  document.getElementById('pc').textContent = S.filter(s=>!s.done).length;
+
+  // Week strip
+  const ws = document.getElementById('ws');
+  if (view==='list') { ws.style.display='none'; }
+  else {
+    ws.style.display='flex';
+    const wd = wk(), tk = today(), he = new Set(f.map(s=>s.date));
+    ws.innerHTML = wd.map((d,i)=>{
+      const k = dk(d), cls = [k===tk?'active':'', k===tk?'today':'', he.has(k)?'has-events':''].filter(Boolean).join(' ');
+      return `<div class="day-tab ${cls}" onclick="selDay('${k}')">
+        <div class="dow">周${DOWS[d.getDay()]}</div><div class="date">${d.getDate()}</div><div class="dot"></div>
+      </div>`;
+    }).join('');
+  }
+
+  // Content
+  const mc = document.getElementById('mc');
+  if (f.length===0) {
+    mc.innerHTML = '<div class="empty-state"><div class="icon">📭</div><div class="text">暂无日程，点击右下角 + 添加</div></div>';
+    return;
+  }
+  const grp = {};
+  f.forEach(s=>{ if(!grp[s.date]) grp[s.date]=[]; grp[s.date].push(s); });
+  const dates = Object.keys(grp).sort();
+  let html = '';
+  dates.forEach(date=>{
+    const items = grp[date], d = new Date(date+'T00:00:00');
+    html += `<div class="day-section" id="day-${date}">
+      <div class="day-label">📌 ${fmtd(d)} 周${DOWS[d.getDay()]} <span class="count">${items.length} 项</span></div>`;
+    items.forEach(s=>{
+      const dc = s.done?' done':'';
+      const ts = s.time ? `${s.time}${s.endTime?' - '+s.endTime:''}` : '全天';
+      html += `<div class="event-card${dc}" onclick="M.edit('${s.id}')">
+        <div class="check" onclick="event.stopPropagation();tog('${s.id}')">${s.done?'✓':''}</div>
+        <div class="body">
+          <div class="tt">${esc(s.title)}</div>
+          <div class="meta">
+            <span class="tbadge">🕐 ${ts}</span>
+            <span class="tag ${s.priority}">${s.priority==='high'?'高':s.priority==='low'?'低':'中'}</span>
+            <span class="cat-${s.category}">${CATS[s.category]||s.category}</span>
+            ${s.note?`<span>📝 ${esc(s.note)}</span>`:''}
+          </div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  mc.innerHTML = html;
+}
+
+function selDay(k) {
+  const el = document.getElementById('day-'+k);
+  if (el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.day-tab').forEach(t=>t.classList.remove('active'));
+  const wd=wk(), idx=wd.findIndex(d=>dk(d)===k);
+  if(idx>=0){ const t=document.querySelectorAll('.day-tab'); if(t[idx]) t[idx].classList.add('active'); }
+}
+
+function tog(id) {
+  const s = S.find(x=>x.id===id);
+  if(!s) return; s.done = !s.done; save(S); render();
+  toast(s.done?'已标记完成 ✓':'已取消完成','ok');
+}
+
+// ========================
+// 模态框
+// ========================
+const M = {
+  open() {
+    editId = null;
+    document.getElementById('mt').textContent = '新建日程';
+    document.getElementById('dr').style.display = 'none';
+    document.getElementById('bs').textContent = '保存';
+    ['ft','fd','ftm','fet','fn'].forEach(x=>document.getElementById(x).value='');
+    document.getElementById('fc').value='work';
+    document.getElementById('fp').value='medium';
+    document.getElementById('fd').value = today();
+    document.getElementById('mo').classList.add('open');
+    setTimeout(()=>document.getElementById('ft').focus(),300);
+  },
+  edit(id) {
+    const s = S.find(x=>x.id===id);
+    if(!s) return;
+    editId = id;
+    document.getElementById('mt').textContent = '编辑日程';
+    document.getElementById('dr').style.display = 'block';
+    document.getElementById('bs').textContent = '更新';
+    document.getElementById('ft').value = s.title;
+    document.getElementById('fd').value = s.date;
+    document.getElementById('ftm').value = s.time||'';
+    document.getElementById('fet').value = s.endTime||'';
+    document.getElementById('fc').value = s.category||'work';
+    document.getElementById('fp').value = s.priority||'medium';
+    document.getElementById('fn').value = s.note||'';
+    document.getElementById('mo').classList.add('open');
+  },
+  close() { document.getElementById('mo').classList.remove('open'); },
+  save(e) {
+    e.preventDefault();
+    const ev = {
+      title: document.getElementById('ft').value.trim(),
+      date: document.getElementById('fd').value,
+      time: document.getElementById('ftm').value,
+      endTime: document.getElementById('fet').value,
+      category: document.getElementById('fc').value,
+      priority: document.getElementById('fp').value,
+      note: document.getElementById('fn').value.trim(),
+    };
+    if(!ev.title||!ev.date){ toast('请填写标题和日期','err'); return; }
+    if(editId) {
+      const idx = S.findIndex(x=>x.id===editId);
+      if(idx>=0) { S[idx] = {...S[idx],...ev}; save(S); toast('已更新 ✓','ok'); }
+    } else {
+      S.push({id:gid(),...ev,done:false});
+      save(S); toast('已创建 ✓','ok');
+    }
+    M.close(); render();
+  },
+  del() {
+    if(!editId||!confirm('确定删除这条日程吗？')) return;
+    S = S.filter(x=>x.id!==editId);
+    save(S); M.close(); render(); toast('已删除','ok');
+  }
+};
+
+// ========================
+// 视图切换
+// ========================
+document.getElementById('vs').addEventListener('click',e=>{
+  const b = e.target.closest('.view-btn');
+  if(!b) return;
+  document.querySelectorAll('.view-btn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  view = b.dataset.view;
+  render();
+});
+
+document.getElementById('mo').addEventListener('click',e=>{
+  if(e.target===e.currentTarget) M.close();
+});
+
+// ========================
+// 初始化
+// ========================
+render();
+</script>
+</body>
+</html>
