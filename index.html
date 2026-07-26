@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="日程">
-<meta name="theme-color" content="#003B9C">
+<meta name="apple-mobile-web-app-title" content="日程管理">
+<meta name="theme-color" content="#0052D9">
 <title>日程管理</title>
 <style>
 :root {
@@ -20,54 +20,91 @@
 body {
   font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
   background:var(--blue-bg); color:var(--text); min-height:100vh;
-  padding-top:calc(44px + var(--safe-top)); padding-bottom:calc(80px + var(--safe-bottom));
+  padding-top:calc(52px + var(--safe-top)); padding-bottom:calc(90px + var(--safe-bottom));
   -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
+  user-select:none; -webkit-user-select:none;
 }
 
+/* ============ HEADER ============ */
 .header {
   position:fixed; top:0; left:0; right:0; z-index:100;
-  background:linear-gradient(135deg,var(--blue-dark),var(--blue-light));
-  color:#fff; padding:calc(12px + var(--safe-top)) 20px 14px;
+  background:linear-gradient(135deg,var(--blue-dark),var(--blue));
+  color:#fff; padding:calc(10px + var(--safe-top)) 16px 10px;
   display:flex; align-items:center; justify-content:space-between;
-  box-shadow:0 2px 20px rgba(0,59,156,.2);
+  box-shadow:0 2px 16px rgba(0,59,156,.18);
 }
-.header h1 { font-size:18px; font-weight:700; letter-spacing:.5px; }
-.header .sync-status {
-  font-size:11px; padding:4px 10px; background:rgba(255,255,255,.15); border-radius:10px;
+.header h1 { font-size:18px; font-weight:700; letter-spacing:.3px; display:flex; align-items:center; gap:8px; }
+.header .hbtn {
+  width:36px; height:36px; border-radius:50%; border:none;
+  background:rgba(255,255,255,.15); color:#fff; font-size:18px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:background .2s;
 }
+.header .hbtn:active { background:rgba(255,255,255,.25); }
 
+/* ============ MENU PANEL ============ */
+.menu-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:210;
+  opacity:0; pointer-events:none; transition:opacity .25s;
+  display:flex; justify-content:flex-end;
+}
+.menu-overlay.open { opacity:1; pointer-events:auto; }
+.menu-panel {
+  width:260px; background:#fff; height:100%; padding:20px 0;
+  transform:translateX(100%); transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex; flex-direction:column;
+}
+.menu-overlay.open .menu-panel { transform:translateX(0); }
+.menu-panel h3 { padding:0 20px 16px; font-size:16px; color:var(--blue-dark); border-bottom:1px solid var(--border); margin-bottom:4px; }
+.menu-items { flex:1; overflow-y:auto; padding:8px 0; }
+.menu-item {
+  display:flex; align-items:center; gap:12px; padding:14px 20px;
+  font-size:15px; font-weight:500; cursor:pointer; border:none;
+  background:none; width:100%; text-align:left; color:var(--text);
+  transition:background .15s;
+}
+.menu-item:active { background:var(--blue-bg); }
+.menu-item .mi { font-size:20px; }
+.menu-footer { padding:16px 20px; border-top:1px solid var(--border); }
+.menu-footer .ver { font-size:12px; color:var(--text2); }
+
+/* ============ VIEW SWITCH ============ */
 .view-switch {
-  display:flex; margin:10px 12px 0; background:#fff; border-radius:10px;
-  padding:3px; box-shadow:0 1px 3px rgba(0,0,0,.04);
+  display:flex; margin:8px 10px 0; background:#fff; border-radius:10px;
+  padding:3px; box-shadow:0 1px 3px rgba(0,0,0,.03);
 }
 .view-btn {
   flex:1; text-align:center; padding:8px; border-radius:8px; font-size:13px;
-  font-weight:600; cursor:pointer; border:none; background:none; color:var(--text2); transition:.2s;
+  font-weight:600; cursor:pointer; border:none; background:none; color:var(--text2);
+  transition:.15s;
 }
 .view-btn.active { background:var(--blue); color:#fff; }
 
+/* ============ WEEK STRIP ============ */
 .week-strip {
-  display:flex; gap:0; padding:6px 6px 2px;
-  background:#fff; margin:8px 12px 0; border-radius:14px;
-  overflow-x:auto; box-shadow:0 1px 3px rgba(0,0,0,.03);
+  display:flex; gap:0; padding:4px 4px 2px;
+  background:#fff; margin:6px 10px 0; border-radius:12px;
+  overflow-x:auto; box-shadow:0 1px 3px rgba(0,0,0,.02);
   -webkit-overflow-scrolling:touch; scrollbar-width:none;
 }
 .week-strip::-webkit-scrollbar { display:none; }
 .day-tab {
-  flex:0 0 auto; min-width:41px; text-align:center; padding:6px 7px;
-  border-radius:10px; cursor:pointer; font-size:12px; color:var(--text2);
-  user-select:none; transition:all .15s;
+  flex:0 0 auto; min-width:42px; text-align:center; padding:6px 6px;
+  border-radius:10px; cursor:pointer; font-size:11px; color:var(--text2);
+  user-select:none; transition:all .15s; position:relative;
 }
 .day-tab .dow { font-size:10px; margin-bottom:1px; }
 .day-tab .date { font-size:16px; font-weight:700; }
 .day-tab.active { background:var(--blue); color:#fff; }
-.day-tab .dot { width:4px; height:4px; border-radius:50%; background:var(--blue); margin:2px auto 0; display:none; }
+.day-tab.today:not(.active) { color:var(--blue); font-weight:700; }
+.day-tab .dot { width:5px; height:5px; border-radius:50%; background:var(--blue); margin:3px auto 0; display:none; }
 .day-tab.has-events .dot { display:block; }
 .day-tab.active .dot { background:#fff; }
 
+/* ============ STATS BAR ============ */
 .stats-bar {
-  display:flex; margin:8px 12px; background:#fff; border-radius:12px;
-  overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.03);
+  display:flex; margin:6px 10px; background:#fff; border-radius:12px;
+  overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.02);
 }
 .stat-item {
   flex:1; text-align:center; padding:12px 6px; border-right:1px solid var(--border);
@@ -79,32 +116,36 @@ body {
 .stat-item .num.c3 { color:var(--red); }
 .stat-item .label { font-size:10px; color:var(--text2); margin-top:2px; }
 
-.main { padding:4px 12px; }
-.day-section { margin-bottom:10px; }
+/* ============ CONTENT ============ */
+.main { padding:4px 10px; }
+.day-section { margin-bottom:8px; }
 .day-label {
   font-size:12px; font-weight:700; color:var(--text2);
-  padding:6px 4px 6px; display:flex; align-items:center; gap:6px;
+  padding:6px 4px; display:flex; align-items:center; gap:6px;
 }
 .day-label .count { font-size:10px; background:var(--border); padding:2px 8px; border-radius:8px; }
 
 .event-card {
   background:var(--card); border-radius:12px; padding:12px 14px;
-  margin-bottom:8px; border-left:4px solid var(--blue);
+  margin-bottom:6px; border-left:4px solid var(--blue);
   box-shadow:0 1px 4px rgba(0,0,0,.03); cursor:pointer;
   transition:transform .12s; display:flex; gap:10px; align-items:flex-start;
 }
 .event-card:active { transform:scale(.985); }
-.event-card.done { opacity:.45; }
+.event-card.done { opacity:.4; }
 .event-card.done .tt { text-decoration:line-through; }
 .event-card .check {
   width:22px; height:22px; border-radius:50%; border:2px solid var(--border);
-  flex-shrink:0; margin-top:2px; display:flex; align-items:center; justify-content:center;
-  font-size:12px; transition:.2s;
+  flex-shrink:0; margin-top:2px; display:flex; align-items:center;
+  justify-content:center; font-size:12px; transition:.2s;
 }
 .event-card.done .check { background:var(--green); border-color:var(--green); color:#fff; }
 .event-card .body { flex:1; min-width:0; }
 .event-card .tt { font-size:15px; font-weight:600; line-height:1.4; }
-.event-card .meta { display:flex; gap:6px; align-items:center; margin-top:5px; font-size:11px; color:var(--text2); flex-wrap:wrap; }
+.event-card .meta {
+  display:flex; gap:6px; align-items:center; margin-top:5px;
+  font-size:11px; color:var(--text2); flex-wrap:wrap;
+}
 .event-card .tbadge {
   font-size:11px; font-weight:600; color:var(--blue);
   background:var(--blue-bg); padding:3px 8px; border-radius:5px;
@@ -119,45 +160,41 @@ body {
 .cat-health { color:#E34D59; }
 .cat-study { color:#7B1FA2; }
 
-.empty-state { text-align:center; padding:40px 20px; color:#C0C8D4; }
-.empty-state .icon { font-size:48px; margin-bottom:12px; }
-.empty-state .text { font-size:14px; }
+.empty-state { text-align:center; padding:50px 20px; }
+.empty-state .icon { font-size:56px; margin-bottom:16px; }
+.empty-state .text { font-size:15px; color:var(--text2); margin-bottom:8px; }
+.empty-state .hint { font-size:12px; color:#BBC5D6; line-height:1.8; }
 
+/* ============ FAB ============ */
 .fab-row {
-  position:fixed; bottom:calc(24px + var(--safe-bottom)); right:20px;
-  display:flex; flex-direction:column; gap:12px; z-index:90;
+  position:fixed; bottom:calc(20px + var(--safe-bottom)); right:18px;
+  display:flex; flex-direction:column; gap:10px; z-index:90;
 }
 .fab {
-  width:52px; height:52px; border-radius:50%; border:none;
-  background:linear-gradient(135deg,var(--blue),var(--blue-light));
-  color:#fff; font-size:26px; box-shadow:0 4px 20px rgba(0,82,217,.4);
+  width:50px; height:50px; border-radius:50%; border:none;
+  color:#fff; font-size:24px; box-shadow:0 4px 18px rgba(0,82,217,.35);
   cursor:pointer; display:flex; align-items:center; justify-content:center;
   transition:transform .2s; -webkit-tap-highlight-color:transparent;
 }
-.fab:active { transform:scale(.92); }
-.fab-mic {
-  background:linear-gradient(135deg,#1A1A2E,#E34D59); font-size:22px;
-  box-shadow:0 4px 20px rgba(227,77,89,.3);
-}
+.fab-add { background:linear-gradient(135deg,var(--blue),var(--blue-light)); }
+.fab-mic { background:linear-gradient(135deg,#1A1A2E,#E34D59); font-size:20px; box-shadow:0 4px 18px rgba(227,77,89,.3); }
+.fab:active { transform:scale(.9); }
 .fab-mic.listening {
-  background:linear-gradient(135deg,#E34D59,#FF4444);
-  animation: micPulse 1.2s infinite;
+  animation:micPulse 1.2s infinite;
 }
 @keyframes micPulse {
-  0%,100% { box-shadow:0 4px 20px rgba(227,77,89,.3); }
-  50% { box-shadow:0 4px 28px rgba(227,77,89,.6),0 0 0 8px rgba(227,77,89,.1); }
+  0%,100% { box-shadow:0 4px 18px rgba(227,77,89,.3); }
+  50% { box-shadow:0 4px 26px rgba(227,77,89,.55),0 0 0 8px rgba(227,77,89,.1); }
 }
 
+/* ============ VOICE OVERLAY ============ */
 .voice-overlay {
   position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:250;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   opacity:0; pointer-events:none; transition:opacity .25s;
 }
 .voice-overlay.open { opacity:1; pointer-events:auto; }
-
-.voice-ring {
-  position:relative; width:100px; height:100px; margin-bottom:24px;
-}
+.voice-ring { position:relative; width:100px; height:100px; margin-bottom:24px; }
 .voice-ring .core {
   position:absolute; inset:20px; border-radius:50%;
   background:linear-gradient(135deg,#E34D59,#FF6B6B);
@@ -173,7 +210,7 @@ body {
   0% { transform:scale(.6); opacity:1; }
   100% { transform:scale(1.4); opacity:0; }
 }
-.voice-hint { color:#fff; font-size:15px; font-weight:600; text-align:center; }
+.voice-hint { color:#fff; font-size:15px; font-weight:600; }
 .voice-text { color:rgba(255,255,255,.7); font-size:18px; margin-top:12px; min-height:24px; text-align:center; max-width:80vw; }
 .voice-stop-btn {
   margin-top:24px; padding:12px 32px; border-radius:24px; border:none;
@@ -181,8 +218,9 @@ body {
   font-weight:600; cursor:pointer; backdrop-filter:blur(4px);
 }
 
+/* ============ VOICE RESULT ============ */
 .voice-result-card {
-  position:fixed; bottom:calc(100px + var(--safe-bottom)); left:12px; right:12px;
+  position:fixed; bottom:calc(90px + var(--safe-bottom)); left:10px; right:10px;
   background:#fff; border-radius:16px; padding:16px; z-index:260;
   box-shadow:0 8px 40px rgba(0,0,0,.15);
   opacity:0; transform:translateY(20px); pointer-events:none;
@@ -196,60 +234,18 @@ body {
 .voice-result-card .vr-head small { font-size:11px; color:var(--green); }
 .voice-result-card .vr-body { margin-bottom:12px; }
 .voice-result-card .vr-item {
-  display:flex; align-items:center; gap:6px; font-size:14px; padding:4px 0;
+  display:flex; align-items:center; gap:6px; font-size:14px; padding:3px 0;
 }
-.voice-result-card .vr-item .vri { font-size:14px; }
 .voice-result-card .vr-btns { display:flex; gap:8px; }
 .voice-result-card .vr-btns button {
-  flex:1; padding:10px; border-radius:10px; font-size:14px;
+  flex:1; padding:11px; border-radius:10px; font-size:14px;
   font-weight:600; border:none; cursor:pointer;
 }
 .vr-confirm { background:var(--blue); color:#fff; }
 .vr-edit { background:var(--blue-bg); color:var(--blue); }
 .vr-cancel { background:#f5f5f5; color:var(--text2); }
-.voice-inline-btn {
-  position:absolute; right:45px; top:50%; transform:translateY(-50%);
-  width:38px; height:38px; border-radius:50%; border:none;
-  background:rgba(255,255,255,.15); color:#fff; font-size:16px;
-  cursor:pointer; display:flex; align-items:center; justify-content:center;
-  z-index:5;
-}
 
-.modal-overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200;
-  display:flex; align-items:flex-end; justify-content:center;
-  opacity:0; pointer-events:none; transition:opacity .25s;
-}
-.modal-overlay.open { opacity:1; pointer-events:auto; }
-.modal {
-  background:#fff; width:100%; max-width:500px; max-height:90vh;
-  border-radius:20px 20px 0 0; padding:24px 20px calc(24px + var(--safe-bottom));
-  transform:translateY(100%); transition:transform .3s cubic-bezier(.4,0,.2,1); overflow-y:auto;
-}
-.modal-overlay.open .modal { transform:translateY(0); }
-
-.modal h2 { font-size:18px; font-weight:700; margin-bottom:20px; }
-.fg { margin-bottom:14px; }
-.fg label { display:block; font-size:11px; font-weight:700; color:var(--text2); margin-bottom:5px; text-transform:uppercase; letter-spacing:.5px; }
-.fg input,.fg select,.fg textarea {
-  width:100%; padding:11px 14px; border:2px solid var(--border); border-radius:10px;
-  font-size:15px; font-family:inherit; color:var(--text); background:#FAFBFD;
-  transition:border-color .2s; -webkit-appearance:none;
-}
-.fg input:focus,.fg select:focus,.fg textarea:focus { outline:none; border-color:var(--blue); background:#fff; }
-.fr { display:flex; gap:10px; }
-.fr .fg { flex:1; }
-.br { display:flex; gap:10px; margin-top:22px; }
-.btn {
-  flex:1; padding:14px; border-radius:12px; font-size:15px;
-  font-weight:700; border:none; cursor:pointer; transition:.15s;
-}
-.btn:active { transform:scale(.97); }
-.btn-p { background:var(--blue); color:#fff; }
-.btn-d { background:#fff; color:var(--red); border:2px solid #FFCDD2; }
-.btn-g { background:#f5f5f5; color:var(--text2); }
-
-/* 智能文本输入面板 */
+/* ============ SMART INPUT ============ */
 .smart-panel-overlay {
   position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:250;
   display:flex; align-items:flex-end; justify-content:center;
@@ -259,15 +255,12 @@ body {
 .smart-panel {
   background:#fff; width:100%; max-width:500px; max-height:85vh;
   border-radius:20px 20px 0 0; padding:20px 16px calc(20px + var(--safe-bottom));
-  transform:translateY(100%); transition:transform .3s cubic-bezier(.4,0,.2,1);
-  overflow-y:auto;
+  transform:translateY(100%); transition:transform .3s cubic-bezier(.4,0,.2,1); overflow-y:auto;
 }
 .smart-panel-overlay.open .smart-panel { transform:translateY(0); }
 .smart-panel h3 { font-size:17px; font-weight:700; margin-bottom:6px; color:var(--blue-dark); }
 .smart-panel .sp-sub { font-size:12px; color:var(--text2); margin-bottom:14px; line-height:1.5; }
-.smart-panel .sp-examples {
-  display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;
-}
+.smart-panel .sp-examples { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
 .smart-panel .sp-eg {
   font-size:12px; padding:6px 10px; background:var(--blue-bg); color:var(--blue);
   border-radius:14px; cursor:pointer; white-space:nowrap;
@@ -277,8 +270,8 @@ body {
 .smart-panel textarea {
   width:100%; padding:14px; border:2px solid var(--border); border-radius:14px;
   font-size:16px; font-family:inherit; color:var(--text); background:#FAFBFD;
-  min-height:70px; resize:none; line-height:1.5;
-  transition:border-color .2s; -webkit-appearance:none;
+  min-height:70px; resize:none; line-height:1.5; transition:border-color .2s;
+  -webkit-appearance:none;
 }
 .smart-panel textarea:focus { outline:none; border-color:var(--blue); background:#fff; }
 .smart-panel .sp-actions { display:flex; gap:10px; margin-top:14px; }
@@ -289,7 +282,7 @@ body {
 .sp-parse-btn { background:var(--blue); color:#fff; }
 .sp-cancel-btn { background:#f5f5f5; color:var(--text2); }
 
-/* 语音不可用提示弹窗 */
+/* ============ VOICE FAIL DIALOG ============ */
 .voice-fail-dialog {
   position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:270;
   display:flex; align-items:center; justify-content:center;
@@ -312,50 +305,118 @@ body {
 .vf-primary { background:var(--blue); color:#fff; }
 .vf-secondary { background:#f5f5f5; color:var(--text2); }
 
+/* ============ MODAL ============ */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200;
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .25s;
+}
+.modal-overlay.open { opacity:1; pointer-events:auto; }
+.modal {
+  background:#fff; width:100%; max-width:500px; max-height:90vh;
+  border-radius:20px 20px 0 0; padding:24px 20px calc(24px + var(--safe-bottom));
+  transform:translateY(100%); transition:transform .3s cubic-bezier(.4,0,.2,1); overflow-y:auto;
+}
+.modal-overlay.open .modal { transform:translateY(0); }
+.modal h2 { font-size:18px; font-weight:700; margin-bottom:20px; }
+.fg { margin-bottom:14px; }
+.fg label { display:block; font-size:11px; font-weight:700; color:var(--text2); margin-bottom:5px; text-transform:uppercase; letter-spacing:.5px; }
+.fg input,.fg select,.fg textarea {
+  width:100%; padding:11px 14px; border:2px solid var(--border); border-radius:10px;
+  font-size:15px; font-family:inherit; color:var(--text); background:#FAFBFD;
+  transition:border-color .2s; -webkit-appearance:none;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus { outline:none; border-color:var(--blue); background:#fff; }
+.fr { display:flex; gap:10px; }
+.fr .fg { flex:1; }
+.br { display:flex; gap:10px; margin-top:22px; }
+.btn {
+  flex:1; padding:14px; border-radius:12px; font-size:15px;
+  font-weight:700; border:none; cursor:pointer; transition:.15s;
+}
+.btn:active { transform:scale(.97); }
+.btn-p { background:var(--blue); color:#fff; }
+.btn-d { background:#fff; color:var(--red); border:2px solid #FFCDD2; }
+.btn-g { background:#f5f5f5; color:var(--text2); }
+
+/* ============ TOAST ============ */
 .toast {
-  position:fixed; top:calc(60px + var(--safe-top)); left:50%; transform:translateX(-50%) translateY(-20px);
+  position:fixed; top:calc(56px + var(--safe-top)); left:50%;
+  transform:translateX(-50%) translateY(-30px);
   background:#1A1A2E; color:#fff; padding:10px 20px; border-radius:10px;
-  font-size:14px; font-weight:600; z-index:300; opacity:0; transition:all .3s;
-  pointer-events:none; white-space:nowrap;
+  font-size:14px; font-weight:600; z-index:300; opacity:0;
+  transition:all .3s; pointer-events:none; white-space:nowrap;
 }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 .toast.ok { background:var(--green); color:#000; }
 .toast.err { background:var(--red); }
 
 @media (min-width:600px) {
-  .main,.stats-bar,.view-switch { max-width:600px; margin-left:auto; margin-right:auto; }
+  .main,.stats-bar,.view-switch,.week-strip { max-width:600px; margin-left:auto; margin-right:auto; }
+  .week-strip { margin-left:auto; margin-right:auto; }
 }
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="header">
   <h1>📅 日程管理</h1>
-  <button class="voice-inline-btn" onclick="startVoice()" title="语音输入">🎤</button>
-  <div class="sync-status">💾 本地存储</div>
+  <div style="display:flex; gap:8px;">
+    <button class="hbtn" onclick="openSmartInput()" title="文字输入">⌨️</button>
+    <button class="hbtn" onclick="openMenu()" title="菜单">☰</button>
+  </div>
 </div>
 
+<!-- MENU PANEL -->
+<div class="menu-overlay" id="mu" onclick="if(event.target===this)closeMenu()">
+  <div class="menu-panel">
+    <h3>⚙️ 设置</h3>
+    <div class="menu-items">
+      <button class="menu-item" onclick="exportData();closeMenu()"><span class="mi">📤</span> 导出数据</button>
+      <button class="menu-item" onclick="closeMenu();document.getElementById('import-file').click()"><span class="mi">📥</span> 导入数据</button>
+      <button class="menu-item" onclick="resetData();closeMenu()"><span class="mi">🔄</span> 重置数据</button>
+    </div>
+    <div class="menu-footer">
+      <div class="ver">v5 — 纯本地存储 · 数据不上传</div>
+    </div>
+  </div>
+  <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+</div>
+
+<!-- VIEW SWITCH -->
 <div class="view-switch" id="vs">
-  <button class="view-btn active" data-view="week">📆 周视图</button>
-  <button class="view-btn" data-view="list">📋 全部</button>
+  <button class="view-btn active" data-view="week">📆 按周查看</button>
+  <button class="view-btn" data-view="list">📋 全部日程</button>
 </div>
 
+<!-- WEEK STRIP -->
 <div class="week-strip" id="ws"></div>
 
+<!-- STATS -->
 <div class="stats-bar">
   <div class="stat-item"><div class="num c1" id="tc">0</div><div class="label">总日程</div></div>
   <div class="stat-item"><div class="num c2" id="dc">0</div><div class="label">已完成</div></div>
   <div class="stat-item"><div class="num c3" id="pc">0</div><div class="label">待完成</div></div>
 </div>
 
-<div class="main" id="mc"><div class="empty-state"><div class="icon">📭</div><div class="text">暂无日程，点击右下角 + 添加</div></div></div>
-
-<div class="fab-row">
-  <button class="fab fab-mic" id="micBtn" onclick="startVoice()" title="语音输入">🎤</button>
-  <button class="fab" onclick="M.open()">+</button>
+<!-- MAIN CONTENT -->
+<div class="main" id="mc">
+  <div class="empty-state">
+    <div class="icon">📭</div>
+    <div class="text">还没有日程</div>
+    <div class="hint">点击右下角 ⊕ 添加<br>或按 🎤 语音输入</div>
+  </div>
 </div>
 
-<div class="modal-overlay" id="mo">
+<!-- FAB BUTTONS -->
+<div class="fab-row">
+  <button class="fab fab-mic" id="micBtn" onclick="startVoice()" title="语音输入">🎤</button>
+  <button class="fab fab-add" onclick="M.open()" title="添加日程">+</button>
+</div>
+
+<!-- MODAL (CRUD) -->
+<div class="modal-overlay" id="mo" onclick="if(event.target===this)M.close()">
   <div class="modal">
     <h2 id="mt">新建日程</h2>
     <form onsubmit="M.save(event)">
@@ -375,31 +436,24 @@ body {
         </div>
       </div>
       <div class="fg"><label>备注</label><textarea id="fn" rows="2" placeholder="可选备注..."></textarea></div>
-      <div class="br">
-        <button type="button" class="btn btn-g" onclick="M.close()">取消</button>
-        <button type="submit" class="btn btn-p" id="bs">保存</button>
-      </div>
-      <div class="br" id="dr" style="display:none">
-        <button type="button" class="btn btn-d" onclick="M.del()">🗑 删除此日程</button>
-      </div>
+      <div class="br"><button type="button" class="btn btn-g" onclick="M.close()">取消</button><button type="submit" class="btn btn-p" id="bs">保存</button></div>
+      <div class="br" id="dr" style="display:none"><button type="button" class="btn btn-d" onclick="M.del()">🗑 删除此日程</button></div>
     </form>
   </div>
 </div>
 
-<div class="toast" id="tst"></div>
-
-<!-- 智能文本输入面板 -->
+<!-- SMART TEXT INPUT -->
 <div class="smart-panel-overlay" id="spo" onclick="if(event.target===this)closeSmartInput()">
   <div class="smart-panel">
-    <h3>✍️ 智能文本输入</h3>
-    <div class="sp-sub">输入一句话描述你的日程，AI 自动解析日期、时间、分类</div>
+    <h3>✍️ 智能文字输入</h3>
+    <div class="sp-sub">输入一句话描述，自动解析日期、时间、分类</div>
     <div class="sp-examples">
       <span class="sp-eg" onclick="fillSmartEg('下周一上午九点半项目评审会')">下周一上午九点半项目评审</span>
       <span class="sp-eg" onclick="fillSmartEg('明天下午三点到四点和客户视频')">明天下午三点到四点视频</span>
-      <span class="sp-eg" onclick="fillSmartEg('这个周五全天部门团建')">周五全天部门团建</span>
+      <span class="sp-eg" onclick="fillSmartEg('周五全天部门团建')">周五全天部门团建</span>
       <span class="sp-eg" onclick="fillSmartEg('八月十五号晚上七点聚餐')">八月十五号晚上聚餐</span>
     </div>
-    <textarea id="spt" placeholder="例如：下周一上午十点开会讨论预算"></textarea>
+    <textarea id="spt" placeholder="比如：下周一上午十点开会讨论预算"></textarea>
     <div class="sp-actions">
       <button class="sp-cancel-btn" onclick="closeSmartInput()">取消</button>
       <button class="sp-parse-btn" onclick="submitSmartInput()">🔍 智能解析</button>
@@ -407,13 +461,12 @@ body {
   </div>
 </div>
 
-<!-- 语音不可用弹窗 -->
-<!-- 语音失败弹窗：自动引导到智能文本输入 -->
+<!-- VOICE FAIL DIALOG -->
 <div class="voice-fail-dialog" id="vfd">
   <div class="voice-fail-content">
     <div class="vf-icon">🎤❌</div>
     <div class="vf-title" id="vft">语音识别不可用</div>
-    <div class="vf-desc" id="vfdsc">可能是网络限制或浏览器不支持。试试文字快速输入，同样支持智能解析。</div>
+    <div class="vf-desc" id="vfdsc"></div>
     <div class="vf-btns">
       <button class="vf-secondary" onclick="closeVoiceFail()">知道了</button>
       <button class="vf-primary" onclick="closeVoiceFail();openSmartInput()">✍️ 文字输入</button>
@@ -421,22 +474,17 @@ body {
   </div>
 </div>
 
-<!-- 语音输入浮层 -->
+<!-- VOICE OVERLAY -->
 <div class="voice-overlay" id="vo" onclick="if(event.target===this)stopVoice()">
-  <div class="voice-ring">
-    <div class="core">🎤</div>
-    <div class="r1"></div>
-    <div class="r2"></div>
-    <div class="r3"></div>
-  </div>
+  <div class="voice-ring"><div class="core">🎤</div><div class="r1"></div><div class="r2"></div><div class="r3"></div></div>
   <div class="voice-hint" id="vh">正在聆听...</div>
   <div class="voice-text" id="vt"></div>
   <button class="voice-stop-btn" onclick="stopVoice()">✋ 点击结束</button>
 </div>
 
-<!-- 语音解析结果 -->
+<!-- VOICE RESULT -->
 <div class="voice-result-card" id="vrc">
-  <div class="vr-head"><span>📋 语音识别结果</span><small id="vrs">确认中...</small></div>
+  <div class="vr-head"><span>📋 识别结果</span><small>请确认</small></div>
   <div class="vr-body" id="vrb"></div>
   <div class="vr-btns">
     <button class="vr-cancel" onclick="dismissVoice()">放弃</button>
@@ -445,76 +493,70 @@ body {
   </div>
 </div>
 
+<!-- TOAST -->
+<div class="toast" id="tst"></div>
+
 <script>
-// ========================
-// 数据引擎 —— localStorage 持久化，完全不依赖后端
-// ========================
-const LS_KEY = 'schedule_data_v2';
+// ============================================================
+// 日程管理 v5 — 纯前端 · localStorage · 零后端依赖
+// ============================================================
+
+const LS_KEY = 'schedule_data_v5';
 const DOWS = ['日','一','二','三','四','五','六'];
 const CATS = {work:'工作',meeting:'会议',personal:'个人',health:'健康',study:'学习'};
 
-// 内置初始数据（从 macOS 系统日历快照）
-const SEED = [
-  {id:'mrzr1qzl7m0q',title:'WorkBuddy 项目合作讨论',date:'2026-07-27',time:'15:00',endTime:'16:00',category:'meeting',priority:'high',note:'讨论 WorkBuddy 项目合作事宜',done:false},
-  {id:'seed_icloud_1',title:'省政数wb',date:'2026-07-27',time:'21:30',endTime:'22:15',category:'work',priority:'medium',note:'',done:false},
-  {id:'seed_icloud_2',title:'广东公有云日会',date:'2026-07-28',time:'08:30',endTime:'09:30',category:'meeting',priority:'high',note:'',done:false},
-  {id:'seed_icloud_3',title:'省政数wb',date:'2026-07-28',time:'21:30',endTime:'22:15',category:'work',priority:'medium',note:'',done:false},
-  {id:'seed_icloud_4',title:'省政数wb',date:'2026-07-29',time:'21:30',endTime:'22:15',category:'work',priority:'medium',note:'',done:false},
-  {id:'seed_icloud_5',title:'省政数wb',date:'2026-07-30',time:'21:30',endTime:'22:15',category:'work',priority:'medium',note:'',done:false},
-  {id:'seed_icloud_6',title:'广东公有云日会',date:'2026-07-31',time:'08:30',endTime:'09:30',category:'meeting',priority:'high',note:'',done:false},
-  {id:'seed_icloud_7',title:'省政数wb',date:'2026-07-31',time:'21:30',endTime:'22:15',category:'work',priority:'medium',note:'',done:false},
-];
-
-function load() {
+// --------------- 数据引擎 ---------------
+function loadData() {
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (raw) return JSON.parse(raw);
   } catch(e) {}
-  // 首次使用：导入种子数据
-  localStorage.setItem(LS_KEY, JSON.stringify(SEED));
-  return SEED;
+  // 首次使用：写入示例数据
+  const seed = [
+    {id:gid(),title:'项目评审会',date:nextBizDay(1),time:'10:00',endTime:'11:30',category:'meeting',priority:'high',note:'准备演示材料',done:false,createdAt:new Date().toISOString()},
+    {id:gid(),title:'周报提交',date:nextBizDay(3),time:'17:00',endTime:'17:30',category:'work',priority:'medium',note:'',done:false,createdAt:new Date().toISOString()},
+  ];
+  saveData(seed);
+  return seed;
+}
+function saveData(data) { localStorage.setItem(LS_KEY, JSON.stringify(data)); }
+
+function nextBizDay(n) {
+  const d = new Date(); d.setDate(d.getDate() + n);
+  while (d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+1);
+  return d.toISOString().slice(0,10);
 }
 
-function save(data) {
-  localStorage.setItem(LS_KEY, JSON.stringify(data));
-}
-
-let S = load();
+let S = loadData();
 let view = 'week';
 let editId = null;
 
-// ========================
-// 工具
-// ========================
+// --------------- 工具函数 ---------------
 function today() { return new Date().toISOString().slice(0,10); }
-function dk(d) { const y=d.getFullYear(); return `${y}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function dk(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function fmtd(d) { return `${d.getMonth()+1}/${d.getDate()}`; }
 function gid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function wk() {
+function weekDays() {
   const n = new Date(), day = n.getDay();
   const m = new Date(n); m.setDate(n.getDate()+(day===0?-6:1-day)); m.setHours(0,0,0,0);
   return Array.from({length:7},(_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d;});
 }
-
 function toast(msg,t) {
   const el = document.getElementById('tst');
   el.textContent = msg; el.className = `toast ${t||''} show`;
   clearTimeout(el._t); el._t = setTimeout(()=>el.className='toast',2000);
 }
 
-// ========================
-// 渲染
-// ========================
-function filtered() {
-  if (view==='list') return [...S];
-  const keys = new Set(wk().map(dk));
-  return S.filter(s=>keys.has(s.date));
+// --------------- 渲染 ---------------
+function filteredEvents() {
+  if (view==='list') return [...S].sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
+  const keys = new Set(weekDays().map(dk));
+  return S.filter(s=>keys.has(s.date)).sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
 }
 
 function render() {
-  const f = filtered();
+  const f = filteredEvents();
   // Stats
   document.getElementById('tc').textContent = S.length;
   document.getElementById('dc').textContent = S.filter(s=>s.done).length;
@@ -522,22 +564,25 @@ function render() {
 
   // Week strip
   const ws = document.getElementById('ws');
-  if (view==='list') { ws.style.display='none'; }
-  else {
+  if (view==='list') {
+    ws.style.display='none';
+  } else {
     ws.style.display='flex';
-    const wd = wk(), tk = today(), he = new Set(f.map(s=>s.date));
+    const wd = weekDays(), tk = today(), he = new Set(S.map(s=>s.date));
     ws.innerHTML = wd.map((d,i)=>{
-      const k = dk(d), cls = [k===tk?'active':'', k===tk?'today':'', he.has(k)?'has-events':''].filter(Boolean).join(' ');
-      return `<div class="day-tab ${cls}" onclick="selDay('${k}')">
+      const k = dk(d), isToday = k===tk, isActive = window._activeDay ? k===window._activeDay : isToday;
+      return `<div class="day-tab${isToday?' today':''}${isActive?' active':''}${he.has(k)?' has-events':''}" onclick="selDay('${k}')">
         <div class="dow">周${DOWS[d.getDay()]}</div><div class="date">${d.getDate()}</div><div class="dot"></div>
       </div>`;
     }).join('');
+    // Auto-set active day
+    if (!window._activeDay) window._activeDay = tk;
   }
 
   // Content
   const mc = document.getElementById('mc');
   if (f.length===0) {
-    mc.innerHTML = '<div class="empty-state"><div class="icon">📭</div><div class="text">暂无日程，点击右下角 + 添加</div></div>';
+    mc.innerHTML = `<div class="empty-state"><div class="icon">📭</div><div class="text">${view==='list'?'还没有日程':'本周暂无日程'}</div><div class="hint">点击右下角 ⊕ 添加<br>或按 🎤 语音输入</div></div>`;
     return;
   }
   const grp = {};
@@ -557,8 +602,8 @@ function render() {
           <div class="tt">${esc(s.title)}</div>
           <div class="meta">
             <span class="tbadge">🕐 ${ts}</span>
-            <span class="tag ${s.priority}">${s.priority==='high'?'高':s.priority==='low'?'低':'中'}</span>
-            <span class="cat-${s.category}">${CATS[s.category]||s.category}</span>
+            <span class="tag ${s.priority||'medium'}">${s.priority==='high'?'高':s.priority==='low'?'低':'中'}</span>
+            <span class="cat-${s.category||'work'}">${CATS[s.category]||'工作'}</span>
             ${s.note?`<span>📝 ${esc(s.note)}</span>`:''}
           </div>
         </div>
@@ -570,22 +615,21 @@ function render() {
 }
 
 function selDay(k) {
-  const el = document.getElementById('day-'+k);
-  if (el) el.scrollIntoView({behavior:'smooth',block:'start'});
-  document.querySelectorAll('.day-tab').forEach(t=>t.classList.remove('active'));
-  const wd=wk(), idx=wd.findIndex(d=>dk(d)===k);
-  if(idx>=0){ const t=document.querySelectorAll('.day-tab'); if(t[idx]) t[idx].classList.add('active'); }
+  window._activeDay = k;
+  render();
+  setTimeout(()=>{
+    const el = document.getElementById('day-'+k);
+    if (el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  },50);
 }
 
 function tog(id) {
   const s = S.find(x=>x.id===id);
-  if(!s) return; s.done = !s.done; save(S); render();
-  toast(s.done?'已标记完成 ✓':'已取消完成','ok');
+  if (!s) return; s.done = !s.done; saveData(S); render();
+  toast(s.done?'已完成 ✓':'已恢复','ok');
 }
 
-// ========================
-// 模态框
-// ========================
+// --------------- 模态框 CRUD ---------------
 const M = {
   open() {
     editId = null;
@@ -601,7 +645,7 @@ const M = {
   },
   edit(id) {
     const s = S.find(x=>x.id===id);
-    if(!s) return;
+    if (!s) return;
     editId = id;
     document.getElementById('mt').textContent = '编辑日程';
     document.getElementById('dr').style.display = 'block';
@@ -627,42 +671,78 @@ const M = {
       priority: document.getElementById('fp').value,
       note: document.getElementById('fn').value.trim(),
     };
-    if(!ev.title||!ev.date){ toast('请填写标题和日期','err'); return; }
-    if(editId) {
+    if (!ev.title||!ev.date) { toast('请填写标题和日期','err'); return; }
+    if (editId) {
       const idx = S.findIndex(x=>x.id===editId);
-      if(idx>=0) { S[idx] = {...S[idx],...ev}; save(S); toast('已更新 ✓','ok'); }
+      if (idx>=0) { S[idx] = {...S[idx],...ev}; saveData(S); toast('已更新 ✓','ok'); }
     } else {
-      S.push({id:gid(),...ev,done:false});
-      save(S); toast('已创建 ✓','ok');
+      S.push({id:gid(),...ev,done:false,createdAt:new Date().toISOString()});
+      saveData(S); toast('已创建 ✓','ok');
     }
     M.close(); render();
   },
   del() {
-    if(!editId||!confirm('确定删除这条日程吗？')) return;
+    if (!editId||!confirm('确定删除这条日程吗？')) return;
     S = S.filter(x=>x.id!==editId);
-    save(S); M.close(); render(); toast('已删除','ok');
+    saveData(S); M.close(); render(); toast('已删除','ok');
   }
 };
 
-// ========================
-// 视图切换
-// ========================
+// --------------- 视图切换 ---------------
 document.getElementById('vs').addEventListener('click',e=>{
   const b = e.target.closest('.view-btn');
-  if(!b) return;
+  if (!b) return;
   document.querySelectorAll('.view-btn').forEach(x=>x.classList.remove('active'));
   b.classList.add('active');
   view = b.dataset.view;
   render();
 });
 
-document.getElementById('mo').addEventListener('click',e=>{
-  if(e.target===e.currentTarget) M.close();
-});
+// --------------- 菜单 ---------------
+function openMenu() { document.getElementById('mu').classList.add('open'); }
+function closeMenu() { document.getElementById('mu').classList.remove('open'); }
 
-// ========================
-// 中文日程 NLP 解析器
-// ========================
+// --------------- 数据导入/导出 ---------------
+function exportData() {
+  const blob = new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `schedule-backup-${today()}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('已导出 ✓','ok');
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!Array.isArray(data)) throw new Error('格式错误');
+      if (!confirm(`将导入 ${data.length} 条日程，当前 ${S.length} 条将被覆盖。确定继续？`)) return;
+      S = data; saveData(S); render();
+      toast(`已导入 ${data.length} 条日程 ✓`,'ok');
+    } catch(err) {
+      toast('导入失败：JSON 格式错误','err');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function resetData() {
+  if (!confirm('确定清除所有日程数据？此操作不可恢复！')) return;
+  if (!confirm('再次确认：清除后数据无法找回，建议先导出备份。')) return;
+  localStorage.removeItem(LS_KEY);
+  S = []; render();
+  toast('数据已清除','ok');
+}
+
+// ============================================================
+// 中文 NLP 解析器
+// ============================================================
 const weekNames = {日:0,一:1,二:2,三:3,四:4,五:5,六:6};
 const numMap = {'零':0,'一':1,'二':2,'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'十一':11,'十二':12,
   '0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'11':11,'12':12,
@@ -674,135 +754,100 @@ function parseNaturalLanguage(text) {
   let remaining = text.replace(/[，。！？、；：""'']/g,' ').replace(/\s+/g,' ').trim();
   const result = {date:'',time:'',endTime:'',title:'',category:'work',priority:'medium',note:''};
 
-  // --- 检测全天 ---
-  if(allDayWords.test(remaining)) {
+  // 全天
+  if (allDayWords.test(remaining)) {
     result.time = ''; result.endTime = '';
     remaining = remaining.replace(allDayWords,'').trim();
   }
-
-  // --- 解析结束时间 ---
+  // 结束时间
   const endMatch = remaining.match(/(到|至|～|~)\s*((?:上午|下午|晚上|中午|早上|凌晨)?\s*(?:[0-9]+|[一二两三四五六七八九十]+)\s*(?:点|时|：|:)\s*(?:[0-9]+|[一二三四五]十?[一二三四五六七八九]?)?\s*(?:分|半|刻)?)/);
-  let endTimeStr = '';
   if (endMatch) {
-    endTimeStr = endMatch[2];
+    result.endTime = parseTimeExpr(endMatch[2]);
     remaining = remaining.slice(0,endMatch.index) + ' ' + remaining.slice(endMatch.index + endMatch[0].length);
-    result.endTime = parseTime(endTimeStr);
   }
-
-  // --- 解析日期 ---
-  const dateInfo = parseDate(remaining);
-  if (dateInfo) {
-    result.date = dateInfo.date;
-    remaining = dateInfo.rest;
-  } else {
-    result.date = today();
-  }
-
-  // --- 解析开始时间 ---
+  // 日期
+  const dateInfo = parseDateExpr(remaining);
+  if (dateInfo) { result.date = dateInfo.date; remaining = dateInfo.rest; }
+  else { result.date = today(); }
+  // 开始时间
   if (!allDayWords.test(text)) {
     const timeInfo = parseTimeFromText(remaining);
     if (timeInfo) {
-      result.time = timeInfo.time;
-      remaining = timeInfo.rest;
-      // 如果有开始时间但没有结束时间，自动 +1h
+      result.time = timeInfo.time; remaining = timeInfo.rest;
       if (result.time && !result.endTime) {
         const [h,m] = result.time.split(':').map(Number);
         result.endTime = `${String(h+1).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
       }
     }
   }
-
-  // --- 剩余的作为标题 ---
+  // 标题
   result.title = remaining.replace(/[，。！？、；：\s]+/g,' ').trim();
-
-  // --- 推断分类 ---
+  // 分类
   if (/会|讨论|汇报|评审|周会|日会|月会|站会/.test(result.title)) result.category='meeting';
   else if (/运动|跑步|健身|游泳|瑜伽|锻炼|体检/.test(result.title)) result.category='health';
   else if (/学|课|书|阅读|考试|培训/.test(result.title)) result.category='study';
   else if (/吃|饭|聚餐|约|逛街|看|电影|旅行|旅游/.test(result.title)) result.category='personal';
-
-  // --- 推断优先级 ---
+  // 优先级
   if (/重要|紧急|必须|关键|截止|deadline/i.test(result.title)) result.priority='high';
   else if (/有空|顺便|不急|随便/.test(result.title)) result.priority='low';
 
   return result;
 }
 
-function parseDate(text) {
-  const t = text.trim();
-  const now = new Date();
-  // 今天/明天/后天/大后天
+function parseDateExpr(text) {
+  const t = text.trim(), now = new Date();
   if (/^今天/.test(t)) return {date:dk(now), rest:t.slice(2).trim()};
-  if (/^明天/.test(t)) { const d=new Date(now); d.setDate(d.getDate()+1); return {date:dk(d), rest:t.slice(2).trim()}; }
-  if (/^后天/.test(t)) { const d=new Date(now); d.setDate(d.getDate()+2); return {date:dk(d), rest:t.slice(2).trim()}; }
-  if (/^大后天/.test(t)) { const d=new Date(now); d.setDate(d.getDate()+3); return {date:dk(d), rest:t.slice(3).trim()}; }
+  if (/^明天/.test(t)) { const d=new Date(now);d.setDate(d.getDate()+1);return {date:dk(d),rest:t.slice(2).trim()}; }
+  if (/^后天/.test(t)) { const d=new Date(now);d.setDate(d.getDate()+2);return {date:dk(d),rest:t.slice(2).trim()}; }
+  if (/^大后天/.test(t)) { const d=new Date(now);d.setDate(d.getDate()+3);return {date:dk(d),rest:t.slice(3).trim()}; }
 
-  // 下/这 + 周X
   const nextWeek = t.match(/^(下|下个?\s*)周\s*([一二三四五六日天])/);
   if (nextWeek) {
-    const offset = nextWeek[1].includes('下') ? 7 : 0;
     const wd = weekNames[nextWeek[2]==='天'?'日':nextWeek[2]];
-    const d = nextWeekday(now, wd, offset);
-    return {date:dk(d), rest:t.slice(nextWeek[0].length).trim()};
+    const d = nextWeekday(now,wd,nextWeek[1].includes('下')?7:0);
+    return {date:dk(d),rest:t.slice(nextWeek[0].length).trim()};
   }
-  // 这周X / 周X
   const thisWeek = t.match(/^(这|这个?\s*)?周\s*([一二三四五六日天])/);
   if (thisWeek) {
     const wd = weekNames[thisWeek[2]==='天'?'日':thisWeek[2]];
-    const d = nextWeekday(now, wd, 0);
-    return {date:dk(d), rest:t.slice(thisWeek[0].length).trim()};
+    return {date:dk(nextWeekday(now,wd,0)),rest:t.slice(thisWeek[0].length).trim()};
   }
-
-  // X月X日 / X月X号
   const absDate = t.match(/^([0-9]+|[一二三四五六七八九十]+)月\s*([0-9]+|[一二三四五六七八九]+[一二]?)\s*[日号]/);
   if (absDate) {
-    const m = toNum(absDate[1]); const dd = toNum(absDate[2]);
-    const y = now.getFullYear();
-    return {date:`${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`, rest:t.slice(absDate[0].length).trim()};
+    return {date:`${now.getFullYear()}-${String(toNum(absDate[1])).padStart(2,'0')}-${String(toNum(absDate[2])).padStart(2,'0')}`,rest:t.slice(absDate[0].length).trim()};
   }
-
-  // X号 / X日
   const dayOnly = t.match(/^([0-9]+|[一二三四五六七八九]+[一二]?)\s*[日号]/);
   if (dayOnly) {
-    const dd = toNum(dayOnly[1]); const m = now.getMonth()+1; const y = now.getFullYear();
-    return {date:`${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`, rest:t.slice(dayOnly[0].length).trim()};
+    return {date:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(toNum(dayOnly[1])).padStart(2,'0')}`,rest:t.slice(dayOnly[0].length).trim()};
   }
-
   return null;
 }
 
 function parseTimeFromText(text) {
-  const t = text.trim();
-  const m = t.match(/^((?:上午|下午|晚上|中午|早上|凌晨)?\s*(?:[0-9]+|[一二两三四五六七八九十]+)\s*(?:点|时|：|:)\s*(?:[0-9]+|[一二三四五]十?[一二三四五六七八九]?)?\s*(?:分|半|刻)?)/);
+  const m = text.trim().match(/^((?:上午|下午|晚上|中午|早上|凌晨)?\s*(?:[0-9]+|[一二两三四五六七八九十]+|十[一二]?)\s*(?:点|时|：|:)\s*(?:[0-9]+|[一二三四五]十?[一二三四五六七八九]?)?\s*(?:分|半|刻)?)/);
   if (!m) return null;
-  const time = parseTime(m[1]);
-  return time ? {time, rest:t.slice(m[0].length).trim()} : null;
+  const time = parseTimeExpr(m[1]);
+  return time ? {time, rest:text.slice(m[0].length).trim()} : null;
 }
 
-function parseTime(ts) {
+function parseTimeExpr(ts) {
   if (!ts||!ts.trim()) return '';
-  let s = ts.trim();
-  let ampm = null;
+  let s = ts.trim(), ampm = null;
   if (/上午|早上/.test(s)) ampm = 'am';
   if (/下午|晚上|中午/.test(s)) ampm = 'pm';
   s = s.replace(/上午|下午|晚上|中午|早上|凌晨/g,'').trim();
 
-  // 处理 "半" "刻"
   let min = 0;
-  if (s.includes('半')) { min = 30; s = s.replace('半',''); }
-  if (/一刻/.test(s)) { min = 15; s = s.replace(/一?刻/,''); }
-  if (/三刻/.test(s)) { min = 45; s = s.replace('三刻/',''); }
+  if (s.includes('半')) { min=30; s=s.replace('半',''); }
+  if (/一刻/.test(s)) { min=15; s=s.replace(/一?刻/,''); }
+  if (/三刻/.test(s)) { min=45; s=s.replace('三刻',''); }
 
-  // 提取数字
   const parts = s.split(/[点时分：:]/);
   let h = toNum(parts[0]||'0');
   if (!min && parts[1]) min = toNum(parts[1]);
 
-  // AM/PM 转换
-  if (ampm==='pm' && h<12) h += 12;
-  if (ampm==='am' && h===12) h = 0;
-  // 无 am/pm，默认可根据语境推断：8-12 点可能是上午，其他看情况
-  if (!ampm && h>=8 && h<=12) {/* keep */}
+  if (ampm==='pm' && h<12) h+=12;
+  if (ampm==='am' && h===12) h=0;
 
   return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
 }
@@ -815,18 +860,14 @@ function toNum(s) {
 
 function nextWeekday(from, targetDow, addWeeks) {
   const d = new Date(from); d.setHours(0,0,0,0);
-  const diff = targetDow - d.getDay();
-  d.setDate(d.getDate() + diff + (addWeeks||0)*7);
-  if (d <= new Date(from.getFullYear(),from.getMonth(),from.getDate())) d.setDate(d.getDate()+7);
+  d.setDate(d.getDate() + (targetDow - d.getDay()) + (addWeeks||0)*7);
   return d;
 }
 
-// ========================
+// ============================================================
 // 语音识别
-// ========================
-let recognition = null;
-let voiceParsed = null;
-let isListening = false;
+// ============================================================
+let recognition = null, voiceParsed = null, isListening = false;
 
 function initSpeech() {
   if (recognition) return true;
@@ -842,91 +883,57 @@ function initSpeech() {
   recognition.onresult = (e) => {
     let transcript = '';
     for (let i=e.resultIndex; i<e.results.length; i++) {
-      if (e.results[i].isFinal) {
-        finalText += e.results[i][0].transcript;
-      } else {
-        transcript += e.results[i][0].transcript;
-      }
+      (e.results[i].isFinal ? finalText : transcript) += e.results[i][0].transcript;
     }
     document.getElementById('vt').textContent = finalText + transcript;
   };
-
   recognition.onend = () => {
     isListening = false;
     document.getElementById('micBtn').classList.remove('listening');
     document.getElementById('vo').classList.remove('open');
-    const finalText = document.getElementById('vt').textContent.trim();
-    if (finalText) {
-      processVoice(finalText);
-    } else {
-      document.getElementById('vt').textContent = '';
-    }
+    const txt = document.getElementById('vt').textContent.trim();
+    if (txt) processVoice(txt); else document.getElementById('vt').textContent = '';
   };
-
   recognition.onerror = (e) => {
     isListening = false;
     document.getElementById('micBtn').classList.remove('listening');
     document.getElementById('vo').classList.remove('open');
     document.getElementById('vt').textContent = '';
-    if (e.error === 'no-speech' || e.error === 'aborted') return;
-
-    // 针对不同错误给出具体引导
-    if (e.error === 'service-not-allowed') {
-      showVoiceFail('语音服务不可用',
-        '可能是当前网络环境无法访问语音识别服务（常见于国内网络）。\n试试文字快速输入，同样支持智能解析日程。');
-    } else if (e.error === 'not-allowed') {
-      showVoiceFail('麦克风权限未授权',
-        '请在浏览器设置中允许麦克风权限，或试试文字快速输入。');
-    } else if (e.error === 'network') {
-      showVoiceFail('网络连接失败',
-        '语音识别需要网络连接。请检查网络后重试，或试试文字快速输入。');
-    } else {
-      showVoiceFail('语音识别失败',
-        '错误：' + e.error + '\n试试文字快速输入，同样支持智能解析。');
-    }
+    if (e.error==='no-speech'||e.error==='aborted') return;
+    const msgs = {
+      'service-not-allowed': ['语音服务不可用','网络环境无法访问语音识别。试试文字快速输入，同样支持智能解析。'],
+      'not-allowed': ['麦克风权限未授权','请在浏览器设置中允许麦克风权限，或试试文字快速输入。'],
+      'network': ['网络连接失败','语音识别需要网络连接。请检查后重试，或试试文字快速输入。'],
+    };
+    const [title,desc] = msgs[e.error]||['语音识别失败','错误：'+e.error+'\n试试文字快速输入。'];
+    showVoiceFail(title,desc);
   };
   return true;
 }
 
-function showVoiceFail(title, desc) {
+function showVoiceFail(title,desc) {
   document.getElementById('vft').textContent = title;
   document.getElementById('vfdsc').textContent = desc;
   document.getElementById('vfd').classList.add('open');
 }
-
-function closeVoiceFail() {
-  document.getElementById('vfd').classList.remove('open');
-}
-
-// 智能文本输入
+function closeVoiceFail() { document.getElementById('vfd').classList.remove('open'); }
 function openSmartInput() {
   document.getElementById('spt').value = '';
   document.getElementById('spo').classList.add('open');
   setTimeout(()=>document.getElementById('spt').focus(),300);
 }
-
-function closeSmartInput() {
-  document.getElementById('spo').classList.remove('open');
-}
-
-function fillSmartEg(text) {
-  document.getElementById('spt').value = text;
-  document.getElementById('spt').focus();
-}
-
+function closeSmartInput() { document.getElementById('spo').classList.remove('open'); }
+function fillSmartEg(text) { document.getElementById('spt').value = text; document.getElementById('spt').focus(); }
 function submitSmartInput() {
-  const rawText = document.getElementById('spt').value.trim();
-  if (!rawText) { toast('请输入日程描述', 'err'); return; }
-  closeSmartInput();
-  voiceParsed = parseNaturalLanguage(rawText);
-  showVoiceResult(rawText, voiceParsed);
+  const raw = document.getElementById('spt').value.trim();
+  if (!raw) { toast('请输入日程描述','err'); return; }
+  closeSmartInput(); showVoiceResult(parseNaturalLanguage(raw));
 }
 
 function startVoice() {
   if (isListening) return;
   if (!initSpeech()) {
-    showVoiceFail('浏览器不支持语音识别',
-      '请使用 Chrome 或 Safari 浏览器，或试试文字快速输入。');
+    showVoiceFail('浏览器不支持语音识别','请使用 Chrome 或 Safari 浏览器，或试试文字快速输入。');
     return;
   }
   isListening = true;
@@ -936,50 +943,35 @@ function startVoice() {
   document.getElementById('vo').classList.add('open');
   try { recognition.start(); } catch(e) {}
 }
-
 function stopVoice() {
   if (!isListening||!recognition) return;
   try { recognition.stop(); } catch(e) {}
 }
+function processVoice(raw) { showVoiceResult(parseNaturalLanguage(raw)); }
 
-function processVoice(rawText) {
-  voiceParsed = parseNaturalLanguage(rawText);
-  showVoiceResult(rawText, voiceParsed);
-}
-
-function showVoiceResult(raw, parsed) {
-  const vrc = document.getElementById('vrc');
-  const vrb = document.getElementById('vrb');
-  const vrs = document.getElementById('vrs');
+function showVoiceResult(parsed) {
+  voiceParsed = parsed;
   const ts = parsed.time ? (parsed.time + (parsed.endTime?' - '+parsed.endTime:'')) : '全天';
   const dl = parsed.date ? new Date(parsed.date+'T00:00:00') : null;
   const ds = dl ? `${dl.getMonth()+1}月${dl.getDate()}日 周${DOWS[dl.getDay()]}` : '今天';
-
-  vrb.innerHTML = `
-    <div class="vr-item"><span class="vri">📝</span><strong>${esc(parsed.title||'(未识别)')}</strong></div>
-    <div class="vr-item"><span class="vri">📅</span>${ds}</div>
-    <div class="vr-item"><span class="vri">🕐</span>${ts}</div>
-    <div class="vr-item"><span class="vri">📂</span>${CATS[parsed.category]} · ${parsed.priority==='high'?'🔴 高':parsed.priority==='low'?'🟢 低':'🟡 中'}</div>
+  document.getElementById('vrb').innerHTML = `
+    <div class="vr-item"><span>📝</span><strong>${esc(parsed.title||'(未识别)')}</strong></div>
+    <div class="vr-item"><span>📅</span>${ds}</div>
+    <div class="vr-item"><span>🕐</span>${ts}</div>
+    <div class="vr-item"><span>📂</span>${CATS[parsed.category]} · ${parsed.priority==='high'?'🔴高':parsed.priority==='low'?'🟢低':'🟡中'}</div>
   `;
-  vrs.textContent = '请确认';
-  vrc.classList.add('open');
+  document.getElementById('vrc').classList.add('open');
 }
-
-function dismissVoice() {
-  document.getElementById('vrc').classList.remove('open');
-  voiceParsed = null;
-}
-
+function dismissVoice() { document.getElementById('vrc').classList.remove('open'); voiceParsed = null; }
 function confirmVoice() {
   if (!voiceParsed) return;
   const p = voiceParsed;
-  S.push({id:gid(), title:p.title||'语音日程', date:p.date||today(), time:p.time||'', endTime:p.endTime||'', category:p.category, priority:p.priority, note:p.note||'', done:false});
-  save(S); render();
+  S.push({id:gid(), title:p.title||'未命名', date:p.date||today(), time:p.time, endTime:p.endTime, category:p.category, priority:p.priority, note:p.note||'', done:false, createdAt:new Date().toISOString()});
+  saveData(S); render();
   document.getElementById('vrc').classList.remove('open');
   voiceParsed = null;
-  toast('🎤 语音日程已保存 ✓','ok');
+  toast('已保存 ✓','ok');
 }
-
 function editVoice() {
   if (!voiceParsed) return;
   const p = voiceParsed;
@@ -992,13 +984,38 @@ function editVoice() {
   document.getElementById('fc').value = p.category;
   document.getElementById('fp').value = p.priority;
   document.getElementById('fn').value = p.note||'';
+  document.getElementById('mt').textContent = '确认日程（语音输入）';
   voiceParsed = null;
-  document.getElementById('mt').textContent = '编辑日程（语音）';
 }
 
-// ========================
+// ============================================================
+// PWA Service Worker（离线缓存）
+// ============================================================
+if ('serviceWorker' in navigator) {
+  // 内联 Service Worker：缓存本页面，离线可打开
+  const swCode = `
+    const CACHE = 'schedule-v5';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/schedule-mobile/'])).then(() => self.skipWaiting()));
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
+          if (resp.ok) { const clone = resp.clone(); caches.open(CACHE).then(c => c.put(e.request, clone)); }
+          return resp;
+        }))
+      );
+    });
+  `;
+  try {
+    const blob = new Blob([swCode], {type:'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(blob), {scope:'/schedule-mobile/'}).catch(()=>{});
+  } catch(e) {}
+}
+
+// ============================================================
 // 初始化
-// ========================
+// ============================================================
 render();
 </script>
 </body>
